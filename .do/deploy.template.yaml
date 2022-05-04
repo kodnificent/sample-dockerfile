@@ -1,9 +1,64 @@
 spec:
-  name: docker
+  name: lm-backend-dev
+  region: fra
+
   services:
-  - dockerfile_path: Dockerfile
+  - name: web
+    dockerfile_path: Dockerfile
     github:
-      branch: main
-      repo: kodnificent/sample-dockerfile
+      branch: develop
       deploy_on_push: true
-    name: web
+      repo: Enlumi/lumi-merchant-backend
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    routes:
+    - path: /
+    source_dir: /
+    envs:
+    - key: DEBUG
+      scope: RUN_TIME
+      value:  True
+    - key: DATABASE_URL
+      scope: RUN_TIME
+      value: ${db.DATABASE_URL}
+
+  databases:
+  - engine: PG
+    name: db
+    num_nodes: 1
+    size: basic-xxs
+    version: "14"
+
+  workers:
+  - name: worker
+    source_dir: /
+    dockerfile_path: Dockerfile
+    run_command: sh -c "cat requirements.txt && sleep infinity"
+    github:
+      repo: Enlumi/lumi-merchant-backend
+      branch: develop
+      deploy_on_push: true
+    envs:
+    - key: DEBUG
+      scope: RUN_TIME
+      value:  True
+    - key: DATABASE_URL
+      scope: RUN_TIME
+      value: ${db.DATABASE_URL}
+
+  jobs:
+  - name: release
+    kind: POST_DEPLOY
+    github:
+      repo: Enlumi/lumi-merchant-backend
+      branch: develop
+      deploy_on_push: true
+    run_command: python enlumi_rewards/manage.py migrate
+    envs:
+    - key: DEBUG
+      scope: RUN_TIME
+      value:  True
+    - key: DATABASE_URL
+      scope: RUN_TIME
+      value: ${db.DATABASE_URL}
