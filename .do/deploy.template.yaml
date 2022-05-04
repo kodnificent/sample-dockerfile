@@ -2,7 +2,7 @@ spec:
   name: docker
   services:
   - dockerfile_path: Dockerfile
-    github:
+    git:
       branch: main
       repo_clone_url: https://github.com/kodnificent/sample-dockerfile.git
     name: web
